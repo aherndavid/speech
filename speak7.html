@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dPaul Text-to-Speech</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #131413;
+            min-height: 100vh;
+            padding: 30px 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: linear-gradient(145deg, #c8c8c8, #e0e0e0);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 
+                0 25px 70px rgba(0, 0, 0, 0.7),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+            border: 3px solid #a8a8a8;
+            position: relative;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%);
+            border-radius: 16px 16px 0 0;
+            pointer-events: none;
+        }
+
+        h1 {
+            color: #000000;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: -0.3px;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 1;
+        }
+
+        .subtitle {
+            color: #3a3a3a;
+            font-size: 11px;
+            margin-bottom: 24px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .led-display-section {
+            background: #0a0a0a;
+            border-radius: 8px;
+            padding: 3px;
+            margin-bottom: 20px;
+            box-shadow: 
+                inset 0 3px 8px rgba(0, 0, 0, 0.6),
+                inset 0 0 0 1px rgba(0, 0, 0, 0.8),
+                0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 2px solid #1a1a1a;
+            position: relative;
+            z-index: 1;
+        }
+
+        .led-label {
+            color: #666;
+            font-size: 9px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 8px;
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            background: #000000;
+            border: none;
+            border-radius: 6px;
+            color: #00ff00;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            line-height: 1.6;
+            box-shadow: 
+                inset 0 0 20px rgba(0, 255, 0, 0.1),
+                inset 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        textarea::placeholder {
+            color: #003300;
+        }
+
+        textarea:focus {
+            outline: none;
+            box-shadow: 
+                inset 0 0 25px rgba(0, 255, 0, 0.15),
+                inset 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .section {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 18px;
+            margin-bottom: 16px;
+            box-shadow: 
+                inset 0 2px 5px rgba(0, 0, 0, 0.4),
+                inset 0 0 0 1px rgba(0, 0, 0, 0.6),
+                0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .section-title {
+            color: #c0c0c0;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        label {
+            display: block;
+            color: #888;
+            font-size: 10px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        select {
+            padding: 10px 12px;
+            background: #0a0a0a;
+            border: 1px solid #000;
+            border-radius: 6px;
+            color: #00ff00;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+            font-family: 'Courier New', monospace;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #1a1a1a;
+        }
+
+        select option {
+            background: #0a0a0a;
+            color: #00ff00;
+        }
+
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: #000;
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+            margin-top: 8px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(145deg, #b0b0b0, #888);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border: 1px solid #666;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(145deg, #b0b0b0, #888);
+            border-radius: 50%;
+            border: 1px solid #666;
+            cursor: pointer;
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .slider-value {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+        }
+
+        .slider-label {
+            color: #666;
+            font-size: 9px;
+            text-transform: uppercase;
+        }
+
+        .slider-number {
+            color: #999;
+            font-size: 11px;
+            font-weight: 700;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 28px;
+            background: linear-gradient(145deg, #3a3a3a, #2a2a2a);
+            border: 2px solid #1a1a1a;
+            border-radius: 6px;
+            color: #999;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+            border-radius: 6px 6px 0 0;
+            pointer-events: none;
+        }
+
+        button:hover {
+            background: linear-gradient(145deg, #444, #333);
+            transform: translateY(-1px);
+            box-shadow: 
+                0 5px 10px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.5),
+                inset 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button:disabled:hover {
+            background: linear-gradient(145deg, #3a3a3a, #2a2a2a);
+            transform: none;
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(145deg, #555, #444);
+            color: #ffffff;
+            border-color: #333;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(145deg, #666, #555);
+        }
+
+        .status {
+            margin-top: 16px;
+            padding: 10px;
+            background: #000000;
+            border-radius: 6px;
+            text-align: center;
+            color: #003300;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 
+                inset 0 2px 5px rgba(0, 0, 0, 0.6),
+                inset 0 0 10px rgba(0, 255, 0, 0.05);
+            font-family: 'Courier New', monospace;
+        }
+
+        .status.active {
+            color: #00cc00;
+            box-shadow: 
+                inset 0 2px 5px rgba(0, 0, 0, 0.6),
+                inset 0 0 15px rgba(0, 255, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>dPaul Text-to-Speech</h1>
+        <p class="subtitle">Professional voice synthesis unit</p>
+
+        <div class="led-display-section">
+            <label class="led-label">Script Display</label>
+            <textarea id="textInput" placeholder="Enter your text here...">The Ferrari 512 BB, or Berlinetta Boxer, represents a pivotal moment in Ferrari's evolution, marking the marque's transition from front-engined V12 grand tourers to mid-engined supercars for road use.</textarea>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Voice Settings</div>
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label for="voiceSelect">Voice</label>
+                    <select id="voiceSelect">
+                        <option value="">Loading voices...</option>
+                    </select>
+                </div>
+
+                <div class="control-group slider-container">
+                    <label>Speed</label>
+                    <input type="range" id="rateSlider" min="0.5" max="2" step="0.1" value="1">
+                    <div class="slider-value">
+                        <span class="slider-label">Slower</span>
+                        <span class="slider-number" id="rateValue">1.0x</span>
+                        <span class="slider-label">Faster</span>
+                    </div>
+                </div>
+
+                <div class="control-group slider-container">
+                    <label>Pitch</label>
+                    <input type="range" id="pitchSlider" min="0.5" max="2" step="0.1" value="1">
+                    <div class="slider-value">
+                        <span class="slider-label">Lower</span>
+                        <span class="slider-number" id="pitchValue">1.0</span>
+                        <span class="slider-label">Higher</span>
+                    </div>
+                </div>
+
+                <div class="control-group slider-container">
+                    <label>Volume</label>
+                    <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1">
+                    <div class="slider-value">
+                        <span class="slider-label">Quiet</span>
+                        <span class="slider-number" id="volumeValue">100%</span>
+                        <span class="slider-label">Loud</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="button-group">
+                <button class="btn-primary" id="speakBtn">Speak</button>
+                <button id="pauseBtn" disabled>Pause</button>
+                <button id="stopBtn" disabled>Stop</button>
+            </div>
+
+            <div class="status" id="status">Ready</div>
+        </div>
+    </div>
+
+    <script>
+        let synth = window.speechSynthesis;
+        let voices = [];
+        let utterance = null;
+        let isPaused = false;
+        
+        // Audio context for effects
+        let audioContext = null;
+        let sourceNode = null;
+        let gainNode = null;
+        let reverbNode = null;
+        let delayNode = null;
+        let distortionNode = null;
+        let bassNode = null;
+        let trebleNode = null;
+        let compressorNode = null;
+
+        // Effect states
+        let effects = {
+            reverb: false,
+            echo: false,
+            distortion: false,
+            bass: false,
+            treble: false,
+            compressor: false
+        };
+
+        // Load voices
+        function loadVoices() {
+            voices = synth.getVoices();
+            
+            let googleVoices = voices.filter(voice => 
+                voice.name.toLowerCase().includes('google')
+            );
+
+            if (googleVoices.length === 0) {
+                googleVoices = voices;
+            }
+
+            const voiceSelect = document.getElementById('voiceSelect');
+            voiceSelect.innerHTML = '';
+
+            if (googleVoices.length === 0) {
+                voiceSelect.innerHTML = '<option value="">No voices available</option>';
+                return;
+            }
+
+            googleVoices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                voiceSelect.appendChild(option);
+            });
+
+            window.filteredVoices = googleVoices;
+        }
+
+        if (synth.onvoiceschanged !== undefined) {
+            synth.onvoiceschanged = loadVoices;
+        }
+        loadVoices();
+
+        // Slider updates
+        document.getElementById('rateSlider').addEventListener('input', (e) => {
+            document.getElementById('rateValue').textContent = e.target.value + 'x';
+        });
+
+        document.getElementById('pitchSlider').addEventListener('input', (e) => {
+            document.getElementById('pitchValue').textContent = e.target.value;
+        });
+
+        document.getElementById('volumeSlider').addEventListener('input', (e) => {
+            document.getElementById('volumeValue').textContent = Math.round(e.target.value * 100) + '%';
+        });
+
+        // Speak button
+        document.getElementById('speakBtn').addEventListener('click', () => {
+            const text = document.getElementById('textInput').value;
+            
+            if (!text.trim()) {
+                updateStatus('Please enter some text');
+                return;
+            }
+
+            synth.cancel();
+
+            utterance = new SpeechSynthesisUtterance(text);
+            
+            const voiceSelect = document.getElementById('voiceSelect');
+            const selectedIndex = voiceSelect.value;
+            
+            if (window.filteredVoices && window.filteredVoices[selectedIndex]) {
+                utterance.voice = window.filteredVoices[selectedIndex];
+            }
+
+            utterance.rate = parseFloat(document.getElementById('rateSlider').value);
+            utterance.pitch = parseFloat(document.getElementById('pitchSlider').value);
+            utterance.volume = parseFloat(document.getElementById('volumeSlider').value);
+
+            utterance.onstart = () => {
+                updateStatus('Speaking...', true);
+                document.getElementById('speakBtn').disabled = true;
+                document.getElementById('pauseBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = false;
+                isPaused = false;
+            };
+
+            utterance.onend = () => {
+                updateStatus('Finished');
+                document.getElementById('speakBtn').disabled = false;
+                document.getElementById('pauseBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = true;
+                isPaused = false;
+            };
+
+            utterance.onerror = (event) => {
+                updateStatus('Error: ' + event.error);
+                document.getElementById('speakBtn').disabled = false;
+                document.getElementById('pauseBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = true;
+            };
+
+            synth.speak(utterance);
+        });
+
+        // Pause button
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            if (isPaused) {
+                synth.resume();
+                document.getElementById('pauseBtn').textContent = 'Pause';
+                updateStatus('Speaking...', true);
+                isPaused = false;
+            } else {
+                synth.pause();
+                document.getElementById('pauseBtn').textContent = 'Resume';
+                updateStatus('Paused');
+                isPaused = true;
+            }
+        });
+
+        // Stop button
+        document.getElementById('stopBtn').addEventListener('click', () => {
+            synth.cancel();
+            updateStatus('Stopped');
+            document.getElementById('speakBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('pauseBtn').textContent = 'Pause';
+            isPaused = false;
+        });
+
+        function updateStatus(message, isActive = false) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            if (isActive) {
+                status.classList.add('active');
+            } else {
+                status.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>
